@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gut &amp; Food Journal</title>
+<style>
+  :root {
+    --cream: #FAF6EF;
+    --ink: #2E2B24;
+    --ink-soft: #5B5648;
+    --sage: #6E8266;
+    --sage-deep: #4F5F49;
+    --clay: #B9773F;
+    --line: #E4DCCB;
+    --card: #FFFFFF;
+    --mild: #DDE7D6;
+    --moderate: #F3DFB8;
+    --severe: #E8C4BE;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--cream);
+  }
+  h1, h2, h3 { font-family: Charter, Georgia, "Iowan Old Style", serif; font-weight: 600; margin: 0; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 0 60px; }
+
+  #storage-banner {
+    display: none;
+    background: #E8C4BE;
+    color: #5C2A22;
+    padding: 10px 24px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 26px 24px 18px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .header h1 { font-size: 24px; }
+  .header p { margin: 4px 0 0; color: var(--ink-soft); font-size: 13px; }
+  .header-text { flex: 1; min-width: 220px; }
+
+  .day-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .day-nav button {
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .day-nav input[type="date"] {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    background: var(--card);
+    color: var(--ink);
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+  }
+  @media (max-width: 760px) {
+    .board { grid-template-columns: 1fr; }
+  }
+
+  .col-meals {
+    padding: 22px;
+    border-right: 1px solid var(--line);
+  }
+  @media (max-width: 760px) {
+    .col-meals { border-right: none; border-bottom: 1px solid var(--line); }
+  }
+  .col-detail { padding: 22px; }
+
+  .quick-add {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .quick-add input {
+    flex: 1;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .quick-add button {
+    padding: 9px 14px;
+    border: none;
+    border-radius: 8px;
+    background: var(--sage);
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .quick-add button:hover { background: var(--sage-deep); }
+
+  .meal-row {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    position: relative;
+  }
+  .meal-row.active { border-color: var(--sage); box-shadow: 0 0 0 1px var(--sage); }
+  .meal-row .mr-top { display: flex; justify-content: space-between; gap: 8px; }
+  .meal-row .mr-food { font-size: 14px; font-weight: 600; }
+  .meal-row .mr-time { font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+  .meal-row .mr-meta { font-size: 12px; color: var(--ink-soft); margin-top: 4px; display: flex; gap: 6px; align-items: center; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot-mild { background: #8FAE7E; }
+  .dot-moderate { background: #D9A24B; }
+  .dot-severe { background: #C97C6E; }
+  .dot-none { background: #C9C2AE; }
+
+  .empty-meals { text-align: center; color: var(--ink-soft); font-size: 13px; padding: 30px 10px; }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; }
+  .field input[type="text"], .field input[type="time"], .field select, .field textarea {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--card);
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--ink);
+  }
+  .field textarea { resize: vertical; min-height: 56px; }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 7px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    user-select: none;
+  }
+  .chip.active { background: var(--sage); border-color: var(--sage); color: white; }
+
+  .detail-actions { display: flex; justify-content: space-between; margin-top: 20px; }
+  .btn-delete {
+    background: none;
+    border: none;
+    color: #A6564A;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .save-hint { font-size: 12px; color: var(--ink-soft); }
+
+  .placeholder { color: var(--ink-soft); font-size: 14px; padding: 30px 10px; text-align: center; }
+
+  .ref-toggle { margin-top: 24px; font-size: 13px; color: var(--sage-deep); cursor: pointer; text-decoration: underline; }
+  .ref-list { margin-top: 10px; font-size: 13px; display: none; }
+  .ref-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--line); }
+  .ref-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+  .tag-low { background: var(--mild); color: #3C5231; }
+  .tag-moderate { background: var(--moderate); color: #7A5417; }
+  .tag-high { background: var(--severe); color: #7A3B32; }
+
+  .insight-box {
+    background: #F1EBDD;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 22px 24px 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .insight-box strong { color: var(--ink); }
+
+  .backup-section {
+    margin: 30px 24px 0;
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--card);
+  }
+  .backup-section h3 { font-size: 15px; margin-bottom: 10px; }
+  .backup-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .backup-row button, .backup-row label {
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--cream);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .backup-row input[type="file"] { display: none; }
+  .backup-textarea { width: 100%; min-height: 70px; font-family: monospace; font-size: 12px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; margin-top: 8px; }
+  .backup-note { font-size: 12px; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<div id="storage-banner">Your browser is blocking local storage on this page, so entries won't be saved between visits. This usually happens when opening the file directly from disk — try hosting it (e.g. GitHub Pages) instead.</div>
+
+<div class="wrap">
+  <div class="header">
+    <div class="header-text">
+      <h1>Gut &amp; Food Journal</h1>
+      <p>Log each meal, then click it to note FODMAP guess, symptoms, and how you felt.</p>
+    </div>
+    <div class="day-nav">
+      <button id="prev-day" aria-label="Previous day">‹</button>
+      <input type="date" id="date-picker"/>
+      <button id="next-day" aria-label="Next day">›</button>
+    </div>
+  </div>
+
+  <div class="board">
+    <div class="col-meals">
+      <div class="quick-add">
+        <input type="text" id="new-meal-input" placeholder="What did you eat?" />
+        <button id="add-meal-btn">Add</button>
+      </div>
+      <div id="meal-list"></div>
+    </div>
+
+    <div class="col-detail" id="detail-panel">
+      <div class="placeholder">Add a meal on the left, or click one to fill in details.</div>
+    </div>
+  </div>
+
+  <div class="insight-box" id="insight-box" style="display:none;"></div>
+
+  <div class="backup-section">
+    <h3>Backup &amp; sync between devices</h3>
+    <p class="backup-note">This journal is saved only in this browser. Export a backup file periodically, or to move your data to another device/browser.</p>
+    <div class="backup-row">
+      <button id="export-btn">Export backup (.json)</button>
+      <label for="import-file">Import from file
+        <input type="file" id="import-file" accept="application/json"/>
+      </label>
+      <button id="show-paste-btn">Import by pasting text</button>
+    </div>
+    <textarea class="backup-textarea" id="paste-area" style="display:none;" placeholder="Paste exported JSON here"></textarea>
+    <div class="backup-row" id="paste-import-row" style="display:none;">
+      <button id="paste-import-btn">Import pasted data</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var STORAGE_KEY = 'gutFoodJournal.entries';
+  var storageAvailable = true;
+  var entries = [];
+  var selectedDate = todayStr();
+  var selectedEntryId = null;
+
+  var knownFoods = [
+    { name: "Lettuce and cucumber salad", tag: "Low" },
+    { name: "Avocado and grilled chicken sandwich", tag: "Moderate" },
+    { name: "Hot oatmeal with banana and milk", tag: "Low" },
+    { name: "Tahini biscuits", tag: "Moderate" },
+    { name: "Tea", tag: "Low" },
+    { name: "Eggs", tag: "Low" },
+    { name: "Cucumber and feta sandwich", tag: "Low" },
+    { name: "Steamed carrots", tag: "Low" },
+    { name: "Steamed cauliflower", tag: "High" },
+    { name: "Steamed broccoli", tag: "Moderate" },
+    { name: "Tomato soup", tag: "Low" },
+    { name: "Onion soup", tag: "High" },
+    { name: "Grilled chicken breast", tag: "Low" },
+    { name: "Kiwi fruit", tag: "Low" },
+    { name: "Orange", tag: "Low" },
+    { name: "Walnuts", tag: "Low" },
+    { name: "Potato with skin", tag: "Low" }
+  ];
+
+  function todayStr() {
+    var d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 10);
+  }
+  function nowTimeStr() {
+    var d = new Date();
+    var h = String(d.getHours()).padStart(2, '0');
+    var m = String(d.getMinutes()).padStart(2, '0');
+    return h + ':' + m;
+  }
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+  function formatDateLabel(dateStr) {
+    var d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+  }
+  function formatTimeLabel(t) {
+    if (!t) return '';
+    var parts = t.split(':');
+    var h = parseInt(parts[0], 10);
+    var m = parts[1];
+    var suffix = h >= 12 ? 'PM' : 'AM';
+    var h12 = h % 12; if (h12 === 0) h12 = 12;
+    return h12 + ':' + m + ' ' + suffix;
+  }
+
+  // ---------- storage ----------
+  function loadEntries() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      entries = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      storageAvailable = false;
+      entries = [];
+      document.getElementById('storage-banner').style.display = 'block';
+    }
+  }
+  function saveEntries() {
+    if (!storageAvailable) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    } catch (e) {
+      storageAvailable = false;
+      document.getElementById('storage-banner').style.display = 'block';
+    }
+  }
+
+  // ---------- date nav ----------
+  var datePicker = document.getElementById('date-picker');
+  datePicker.value = selectedDate;
+  datePicker.addEventListener('change', function () {
+    selectedDate = datePicker.value || todayStr();
+    selectedEntryId = null;
+    renderMealList();
+    renderDetail();
+  });
+  document.getElementById('prev-day').addEventListener('click', function () { shiftDay(-1); });
+  document.getElementById('next-day').addEventListener('click', function () { shiftDay(1); });
+  function shiftDay(delta) {
+    var d = new Date(selectedDate + 'T00:00:00');
+    d.setDate(d.getDate() + delta);
+    selectedDate = d.toISOString().slice(0, 10);
+    datePicker.value = selectedDate;
+    selectedEntryId = null;
+    renderMealList();
+    renderDetail();
+  }
+
+  // ---------- quick add ----------
+  var newMealInput = document.getElementById('new-meal-input');
+  document.getElementById('add-meal-btn').addEventListener('click', addMeal);
+  newMealInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') addMeal();
+  });
+  function addMeal() {
+    var food = newMealInput.value.trim();
+    if (!food) return;
+    var entry = {
+      id: uid(),
+      date: selectedDate,
+      time: nowTimeStr(),
+      food: food,
+      mealType: null,
+      fodmap: null,
+      symptoms: [],
+      severity: null,
+      notes: ''
+    };
+    entries.push(entry);
+    saveEntries();
+    newMealInput.value = '';
+    selectedEntryId = entry.id;
+    renderMealList();
+    renderDetail();
+  }
+
+  // ---------- meal list ----------
+  function entriesForDay(dateStr) {
+    return entries.filter(function (e) { return e.date === dateStr; })
+      .sort(function (a, b) { return (a.time || '').localeCompare(b.time || ''); });
+  }
+  function severityDotClass(e) {
+    if (!e.symptoms || !e.symptoms.length || e.symptoms.indexOf('None') !== -1) return 'dot-none';
+    if (e.severity === 'Severe') return 'dot-severe';
+    if (e.severity === 'Moderate') return 'dot-moderate';
+    return 'dot-mild';
+  }
+  function renderMealList() {
+    var list = document.getElementById('meal-list');
+    var dayEntries = entriesForDay(selectedDate);
+    if (!dayEntries.length) {
+      list.innerHTML = '<div class="empty-meals">No meals logged for ' + formatDateLabel(selectedDate) + ' yet.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    dayEntries.forEach(function (e) {
+      var row = document.createElement('div');
+      row.className = 'meal-row' + (e.id === selectedEntryId ? ' active' : '');
+      row.setAttribute('data-id', e.id);
+      var metaBits = [];
+      if (e.mealType) metaBits.push(e.mealType);
+      if (e.fodmap) metaBits.push('FODMAP: ' + e.fodmap);
+      row.innerHTML =
+        '<div class="mr-top"><span class="mr-food">' + escapeHtml(e.food) + '</span><span class="mr-time">' + formatTimeLabel(e.time) + '</span></div>' +
+        '<div class="mr-meta"><span class="dot ' + severityDotClass(e) + '"></span>' + escapeHtml(metaBits.join(' · ')) + '</div>';
+      row.addEventListener('click', function () {
+        selectedEntryId = e.id;
+        renderMealList();
+        renderDetail();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  // ---------- detail panel ----------
+  var mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Drink'];
+  var fodmapOptions = ['Low', 'Moderate', 'High', 'Unsure'];
+  var symptomOptions = ['Bloating', 'Gas', 'Cramping', 'Rumbling', 'Constipation', 'Loose stool', 'Nausea', 'None'];
+  var severityOptions = ['Mild', 'Moderate', 'Severe'];
+
+  function findEntry(id) {
+    for (var i = 0; i < entries.length; i++) if (entries[i].id === id) return entries[i];
+    return null;
+  }
+
+  function renderDetail() {
+    var panel = document.getElementById('detail-panel');
+    var entry = selectedEntryId ? findEntry(selectedEntryId) : null;
+    if (!entry) {
+      panel.innerHTML = '<div class="placeholder">Add a meal on the left, or click one to fill in details.</div>' + refHtml();
+      wireRefToggle();
+      return;
+    }
+
+    panel.innerHTML =
+      '<div class="field"><label>Food or meal</label><input type="text" id="d-food" value="' + escapeHtml(entry.food) + '"/></div>' +
+      '<div class="field"><label>Time</label><input type="time" id="d-time" value="' + (entry.time || '') + '"/></div>' +
+      '<div class="field"><label>Meal type</label><div class="chip-row" id="d-mealtype">' + chipsHtml(mealTypes, entry.mealType) + '</div></div>' +
+      '<div class="field"><label>FODMAP / trigger guess</label><div class="chip-row" id="d-fodmap">' + chipsHtml(fodmapOptions, entry.fodmap) + '</div></div>' +
+      '<div class="field"><label>Symptoms after</label><div class="chip-row" id="d-symptoms">' + chipsHtml(symptomOptions, entry.symptoms) + '</div></div>' +
+      '<div class="field"><label>Severity</label><div class="chip-row" id="d-severity">' + chipsHtml(severityOptions, entry.severity) + '</div></div>' +
+      '<div class="field"><label>Notes</label><textarea id="d-notes" placeholder="How you felt, timing, anything else">' + escapeHtml(entry.notes || '') + '</textarea></div>' +
+      '<div class="detail-actions"><button class="btn-delete" id="d-delete">Remove this entry</button><span class="save-hint" id="d-save-hint"></span></div>' +
+      refHtml();
+
+    document.getElementById('d-food').addEventListener('input', function () { entry.food = this.value; saveEntries(); renderMealList(); flashSaved(); });
+    document.getElementById('d-time').addEventListener('change', function () { entry.time = this.value; saveEntries(); renderMealList(); flashSaved(); });
+    document.getElementById('d-notes').addEventListener('input', function () { entry.notes = this.value; saveEntries(); flashSaved(); });
+
+    wireSingleChips('d-mealtype', function (val) { entry.mealType = val; });
+    wireSingleChips('d-fodmap', function (val) { entry.fodmap = val; });
+    wireSingleChips('d-severity', function (val) { entry.severity = val; });
+    wireMultiChips('d-symptoms', entry, 'symptoms');
+
+    document.getElementById('d-delete').addEventListener('click', function () {
+      entries = entries.filter(function (x) { return x.id !== entry.id; });
+      saveEntries();
+      selectedEntryId = null;
+      renderMealList();
+      renderDetail();
+      renderInsight();
+    });
+
+    wireRefToggle();
+    renderInsight();
+  }
+
+  function flashSaved() {
+    var hint = document.getElementById('d-save-hint');
+    if (!hint) return;
+    hint.textContent = 'Saved';
+    clearTimeout(flashSaved._t);
+    flashSaved._t = setTimeout(function () { hint.textContent = ''; }, 1200);
+  }
+
+  function chipsHtml(options, activeVal) {
+    var activeSet = Array.isArray(activeVal) ? activeVal : (activeVal ? [activeVal] : []);
+    return options.map(function (opt) {
+      var isActive = activeSet.indexOf(opt) !== -1;
+      return '<div class="chip' + (isActive ? ' active' : '') + '" data-val="' + escapeHtml(opt) + '">' + opt + '</div>';
+    }).join('');
+  }
+  function wireSingleChips(containerId, onSelect) {
+    var container = document.getElementById(containerId);
+    var chips = container.querySelectorAll('.chip');
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var wasActive = chip.classList.contains('active');
+        chips.forEach(function (c) { c.classList.remove('active'); });
+        var val = null;
+        if (!wasActive) { chip.classList.add('active'); val = chip.getAttribute('data-val'); }
+        onSelect(val);
+        saveEntries();
+        renderMealList();
+        flashSaved();
+      });
+    });
+  }
+  function wireMultiChips(containerId, entry, field) {
+    var container = document.getElementById(containerId);
+    var chips = container.querySelectorAll('.chip');
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var val = chip.getAttribute('data-val');
+        var arr = entry[field].slice();
+        if (val === 'None') {
+          arr = arr.indexOf('None') !== -1 ? [] : ['None'];
+        } else {
+          var idx = arr.indexOf('None');
+          if (idx !== -1) arr.splice(idx, 1);
+          var vIdx = arr.indexOf(val);
+          if (vIdx !== -1) arr.splice(vIdx, 1); else arr.push(val);
+        }
+        entry[field] = arr;
+        chips.forEach(function (c) { c.classList.toggle('active', arr.indexOf(c.getAttribute('data-val')) !== -1); });
+        saveEntries();
+        renderMealList();
+        flashSaved();
+      });
+    });
+  }
+
+  // ---------- reference panel ----------
+  function refHtml() {
+    var items = knownFoods.map(function (f) {
+      var cls = f.tag === 'Low' ? 'tag-low' : f.tag === 'Moderate' ? 'tag-moderate' : 'tag-high';
+      return '<div class="ref-item"><span>' + f.name + '</span><span class="ref-tag ' + cls + '">' + f.tag + '</span></div>';
+    }).join('');
+    return '<div class="ref-toggle" id="ref-toggle">Show quick FODMAP reference ▾</div><div class="ref-list" id="ref-list">' + items + '</div>';
+  }
+  function wireRefToggle() {
+    var toggle = document.getElementById('ref-toggle');
+    var list = document.getElementById('ref-list');
+    if (!toggle) return;
+    toggle.addEventListener('click', function () {
+      var open = list.style.display === 'block';
+      list.style.display = open ? 'none' : 'block';
+      toggle.textContent = open ? 'Show quick FODMAP reference ▾' : 'Hide FODMAP reference ▴';
+    });
+  }
+
+  // ---------- insight ----------
+  function renderInsight() {
+    var box = document.getElementById('insight-box');
+    var withSymptoms = entries.filter(function (e) { return e.symptoms && e.symptoms.length && e.symptoms.indexOf('None') === -1; });
+    if (withSymptoms.length < 2) { box.style.display = 'none'; return; }
+    var counts = {};
+    withSymptoms.forEach(function (e) {
+      var key = (e.food || '').toLowerCase().trim();
+      if (!key) return;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    var sorted = Object.keys(counts).map(function (k) { return [k, counts[k]]; }).sort(function (a, b) { return b[1] - a[1]; });
+    var top = sorted.filter(function (pair) { return pair[1] >= 2; }).slice(0, 3);
+    if (!top.length) { box.style.display = 'none'; return; }
+    var text = top.map(function (pair) { return pair[0] + ' (' + pair[1] + '×)'; }).join(', ');
+    box.style.display = 'block';
+    box.innerHTML = '<strong>Worth noticing:</strong> these foods showed up alongside symptoms more than once across your journal — ' + text + '. Not a diagnosis, just a pattern to keep an eye on.';
+  }
+
+  // ---------- export / import ----------
+  document.getElementById('export-btn').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'gut-food-journal-backup-' + todayStr() + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('import-file').addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      importData(reader.result);
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  var pasteArea = document.getElementById('paste-area');
+  var pasteRow = document.getElementById('paste-import-row');
+  document.getElementById('show-paste-btn').addEventListener('click', function () {
+    var visible = pasteArea.style.display === 'block';
+    pasteArea.style.display = visible ? 'none' : 'block';
+    pasteRow.style.display = visible ? 'none' : 'flex';
+  });
+  document.getElementById('paste-import-btn').addEventListener('click', function () {
+    importData(pasteArea.value);
+  });
+
+  function importData(text) {
+    var parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (e) {
+      alert('That did not look like valid backup data — no changes were made.');
+      return;
+    }
+    if (!Array.isArray(parsed)) {
+      alert('That did not look like valid backup data — no changes were made.');
+      return;
+    }
+    var confirmMsg = entries.length
+      ? 'This will replace your ' + entries.length + ' existing entries with ' + parsed.length + ' from the backup. Continue?'
+      : 'Import ' + parsed.length + ' entries?';
+    if (!confirm(confirmMsg)) return;
+    entries = parsed;
+    saveEntries();
+    selectedEntryId = null;
+    renderMealList();
+    renderDetail();
+    renderInsight();
+    alert('Import complete.');
+  }
+
+  // ---------- init ----------
+  loadEntries();
+  renderMealList();
+  renderDetail();
+  renderInsight();
+})();
+</script>
+</body>
+</html>
